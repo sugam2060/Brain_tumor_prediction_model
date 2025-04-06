@@ -1,0 +1,13 @@
+# General ignores
+*.pyc
+__pycache__/
+.env
+node_modules/
+build/
+dist/
+.DS_Store
+
+model_and_api/model.h5
+
+Testing
+Training

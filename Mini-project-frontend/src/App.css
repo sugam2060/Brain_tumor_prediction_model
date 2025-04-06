@@ -1,0 +1,111 @@
+/* Style for the container */
+.image-input-container {
+  display: flex;
+  gap: 40px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin: 20px;
+  padding: 20px;
+  border: 2px dashed #ccc;
+  border-radius: 10px;
+  background-color: #f9f9f9;
+  transition: background-color 0.3s ease;
+}
+
+.image-input-container .input-field {
+  display: flex;
+}
+
+.image-input-container:hover {
+  background-color: #f0f0f0;
+}
+
+/* Style for the file input */
+.image-input-container input[type="file"] {
+  
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Style for the button */
+.image-input-container button {
+  padding: 10px 20px;
+  font-size: 16px;
+  color: #fff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.image-input-container button:hover {
+  background-color: #0056b3;
+}
+
+.image-preview {
+  border-radius: 20px;
+  width: 200px;
+}
+
+.prediction-container {
+  margin: 20px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: #f9f9f9;
+  text-align: center;
+}
+
+.prediction-container h2 {
+  margin-bottom: 10px;
+  font-size: 20px;
+  color: #333;
+}
+
+.prediction-box {
+  padding: 15px;
+  border: 2px solid #007bff;
+  border-radius: 5px;
+  background-color: #e6f7ff;
+  color: #007bff;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.no-prediction {
+  color: #999;
+  font-size: 16px;
+}
+
+
+.prediction-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: "Segoe UI", sans-serif;
+}
+
+.result-html h3 {
+  margin-top: 1rem;
+  color: #2c3e50;
+}
+
+.result-html ul {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.result-html li {
+  margin-bottom: 0.5rem;
+}
+
+.result-html p {
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
