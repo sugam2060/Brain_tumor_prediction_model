@@ -1,188 +1,124 @@
-# 🧠 Brain Tumor Detection & Classification System
+# 🧠 Brain Tumor Detection & Classification System (PyTorch + FastAPI + React)
 
-An end-to-end Deep Learning web application for automatic detection and multi-class classification of brain tumors from MRI scans. Built with **TensorFlow/Keras**, **Flask REST API**, and a modern **React + Vite** frontend interface.
-
----
-
-## 📌 Project Overview
-
-Brain tumor classification plays a critical role in medical diagnostics and treatment planning. This system automates the evaluation of Brain MRI scans, classifying them into 4 distinct categories:
-
-1. **Glioma**: Primary brain tumor originating in glial cells.
-2. **Meningioma**: Tumor arising from the meninges (membranes covering the brain/spinal cord).
-3. **No Tumor**: Healthy brain MRI scan without detectable tumor tissue.
-4. **Pituitary**: Tumor developing in the pituitary gland.
-
-The application accepts an uploaded brain MRI image, pre-processes it to $128 \times 128$ resolution, runs inference through a trained Convolutional Neural Network (CNN), and returns the diagnosis along with confidence probability metrics.
+An end-to-end Deep Learning web application for automatic detection and multi-class classification of brain tumors from MRI scans. Built with **PyTorch (torchvision VGG16)**, **FastAPI (Uvicorn)** backend REST API, and a modern **React + Vite** frontend interface. Fully compatible with **Python 3.12+**.
 
 ---
 
-## 📊 Model Performance & Evaluation Metrics
-
-The Deep Learning model was evaluated on 1,600 test MRI samples using multiple performance metrics:
-
-### 1. Training History (Accuracy vs. Loss)
-The model was trained over 5 epochs. The training curve demonstrates rapid convergence, with accuracy reaching **~96.5%** and training loss dropping significantly from **0.47** down to **~0.09**.
-
-![Model Training History](model_and_api/model_training_history(accuracy%20vs%20loss).png)
-
-### 2. Confusion Matrix
-Evaluating multi-class predictions across 1,600 unseen test samples (400 per class):
-* **Glioma**: 318 correct predictions out of 400 cases.
-* **Meningioma**: 381 correct predictions out of 400 cases.
-* **No Tumor**: 397 correct predictions out of 400 cases (*99.25% precision*).
-* **Pituitary**: 388 correct predictions out of 400 cases.
-
-![Confusion Matrix](model_and_api/confusion_matrics.png)
-
-### 3. Receiver Operating Characteristic (ROC) Curves
-The Area Under the Curve (AUC) scores demonstrate near-perfect class separation across all 4 categories:
-* **Glioma ROC AUC**: `1.00`
-* **Meningioma ROC AUC**: `0.99`
-* **No Tumor ROC AUC**: `1.00`
-* **Pituitary ROC AUC**: `1.00`
-
-![ROC Curves](model_and_api/ROC_curve.png)
-
----
-
-## 🛠️ Project Structure
+## 📌 Project Structure
 
 ```
 Brain_tumor_prediction_model/
-├── .gitattributes                # Git LFS configuration for model.keras
-├── .gitignore                    # Prevents datasets and heavy build files from git
+├── .gitattributes                # Git LFS configuration for *.pth weights
+├── .gitignore                    # Ignores dataset folders & temporary build files
+├── .python-version               # Python version (3.12.0)
 ├── README.md                     # Documentation & setup guide
-├── model_and_api/                # Backend Flask API & Deep Learning Model
-│   ├── FlaskAPI.py               # Flask REST server handling image upload & inference
-│   ├── mainModel.ipynb           # Model architecture, training script, & evaluations
-│   ├── model.keras               # Trained Keras model file (~128 MB)
-│   ├── requirement.txt           # Python dependencies (TensorFlow, Flask, Gunicorn, etc.)
-│   ├── .env.example              # Environment variables template
-│   ├── confusion_matrics.png     # Evaluation plot
-│   ├── ROC_curve.png             # Evaluation plot
-│   ├── model_training_history(accuracy vs loss).png # Evaluation plot
-│   └── uploads/                  # Temporary storage for uploaded scans
+│
+├── model_prep_and_api/           # Parent Container Folder
+│   ├── model_prep/               # Training & Dataset Prep
+│   │   ├── model_def.py          # PyTorch BrainTumorVGG16 model architecture
+│   │   ├── train_pytorch_model.py# PyTorch training & evaluation script (saves model.pth to api/)
+│   │   ├── requirement_model_prep.txt # Training & GPU dependencies (CUDA 12.1, PyTorch, tqdm, etc.)
+│   │   ├── Training/             # Training dataset (ignored in git)
+│   │   ├── Testing/              # Testing dataset (ignored in git)
+│   │   └── report/               # Saved evaluation charts & text report
+│   │       ├── confusion_matrics.png
+│   │       ├── ROC_curve.png
+│   │       ├── classification_report.txt
+│   │       └── model_training_history(accuracy vs loss).png
+│   │
+│   └── api/                      # Backend FastAPI Service (Deployable to Render)
+│       ├── main.py               # FastAPI REST API for image inference
+│       ├── model_def.py          # PyTorch model architecture definition
+│       ├── model.pth             # Saved PyTorch model weights (Git LFS)
+│       ├── requirement.txt       # Production dependencies for API (PyTorch, FastAPI, Uvicorn)
+│       ├── .env.example          # Environment variables template
+│       ├── .python-version       # Set to 3.12.0
+│       └── uploads/              # Temporary image uploads
+│
 └── Mini-project-frontend/        # React + Vite Frontend UI
-    ├── package.json              # NPM dependencies & scripts
-    ├── index.html                # Entry point HTML
+    ├── package.json              # NPM dependencies & build scripts
+    ├── index.html                # Main HTML entry point
     ├── src/                      # React components & UI logic
     └── .env.example              # Frontend environment variables template
 ```
 
 ---
 
-## 🚀 Detailed Local Setup & Running Guide
+## 🛠️ Local Running & Training Guide
 
 ### Prerequisites
-- **Python**: Version 3.10 or higher
-- **Node.js**: Version 18.x or higher (includes `npm`)
-- **Git & Git LFS**: Required if pulling or pushing the large `model.keras` file
+- **Python**: Version 3.12 or higher
+- **Node.js**: Version 18.x or higher
+- **Git & Git LFS**: For managing `model.pth` weights
 
 ---
 
-### Step 1: Model & Dataset Setup (Optional for Re-training)
+### Step 1: Model Training (Local with GPU CUDA Support)
 
-1. Download the Brain Tumor MRI Dataset from [Kaggle](https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset).
-2. Unzip the downloaded dataset.
-3. Move the `Training` and `Testing` folders into `model_and_api/` directory if you wish to re-train the model in `mainModel.ipynb`.
-4. Run all cells in `model_and_api/mainModel.ipynb` to generate a fresh `model.keras` file.
-
----
-
-### Step 2: Backend Setup (Flask API)
-
-1. Open terminal and navigate to `model_and_api`:
+1. Open terminal and navigate to `model_prep_and_api/model_prep`:
    ```bash
-   cd model_and_api
+   cd model_prep_and_api/model_prep
    ```
-2. Create and activate a Python virtual environment:
-   - **Windows**:
-     ```cmd
-     python -m venv .venv
-     .venv\Scripts\activate
-     ```
-   - **macOS/Linux**:
-     ```bash
-     python3 -m venv .venv
-     source .venv/bin/activate
-     ```
-3. Install required dependencies:
+2. Install training & GPU dependencies:
+   ```bash
+   pip install -r requirement_model_prep.txt
+   ```
+3. Place `Training/` and `Testing/` dataset folders inside `model_prep_and_api/model_prep/`.
+4. Run the training script:
+   ```bash
+   python train_pytorch_model.py
+   ```
+   *This trains the pre-trained VGG16 PyTorch model with GPU acceleration (RTX 3050), generates evaluation reports in `model_prep/report/`, and automatically saves `model.pth` into `model_prep_and_api/api/`.*
+
+---
+
+### Step 2: Backend Setup (FastAPI + Uvicorn)
+
+1. Navigate to `model_prep_and_api/api`:
+   ```bash
+   cd model_prep_and_api/api
+   ```
+2. Install production API dependencies:
    ```bash
    pip install -r requirement.txt
    ```
-4. Configure environment variables (optional):
-   Create a `.env` file inside `model_and_api/` based on `.env.example`:
-   ```env
-   MODEL_PATH=./model.keras
-   UPLOAD_DIR=./uploads
-   CORS_ORIGINS=*
-   PORT=5000
-   ```
-5. Start the Flask API server using Waitress WSGI server:
+3. Start the FastAPI server with Uvicorn:
    ```bash
-   python -m waitress FlaskAPI:app
+   uvicorn main:app --port 5000 --reload
    ```
-   *(Alternatively, you can also run `python FlaskAPI.py`)*
-
-   The backend API will run locally at `http://localhost:5000`. Test endpoint health at `http://localhost:5000/health`.
+   *Backend API runs at `http://localhost:5000`.*
+   *Interactive API Documentation (Swagger UI): `http://localhost:5000/docs`.*
 
 ---
 
 ### Step 3: Frontend Setup (React + Vite)
 
-1. Open a new terminal window and navigate to `Mini-project-frontend`:
+1. Navigate to `Mini-project-frontend`:
    ```bash
    cd Mini-project-frontend
    ```
-2. Install NPM packages:
+2. Install NPM packages & start development server:
    ```bash
    npm install
-   ```
-3. Configure environment variables:
-   Create a `.env` file in `Mini-project-frontend/` based on `.env.example`:
-   ```env
-   VITE_API_BASE_URL=http://localhost:5000
-   ```
-4. Start the frontend development server:
-   ```bash
    npm run dev
    ```
-5. Open the displayed local URL (e.g. `http://localhost:5173`) in your web browser. Upload a brain MRI image to receive real-time prediction results!
+3. Open `http://localhost:5173` in your browser. Upload an MRI scan to view classification results!
 
 ---
 
-## 🌐 Cloud Deployment Guide (Render)
+## 🌐 Cloud Deployment (Render)
 
-### Step 1: Git LFS & GitHub Push
-Since `model.keras` exceeds GitHub's 100MB single-file limit, use **Git LFS**:
-```bash
-git lfs install
-git lfs track "*.keras"
-git add .
-git commit -m "Configure deployment and README documentation"
-git push origin main
-```
+### Backend Service (`model_prep_and_api/api`)
+1. Create a **Web Service** on [Render](https://dashboard.render.com/).
+2. Set **Root Directory**: `model_prep_and_api/api`
+3. Set **Runtime**: `Python 3`
+4. Set **Build Command**: `pip install -r requirement.txt`
+5. Set **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+6. Set Environment Variable: `PYTHON_VERSION` = `3.12.0`
 
-### Step 2: Deploy Backend Web Service on Render
-1. Go to [Render Dashboard](https://dashboard.render.com/) $\rightarrow$ **New +** $\rightarrow$ **Web Service**.
-2. Connect your GitHub repository.
-3. Configure settings:
-   - **Root Directory**: `model_and_api`
-   - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirement.txt`
-   - **Start Command**: `gunicorn -b 0.0.0.0:$PORT --timeout 120 FlaskAPI:app`
-4. Set Environment Variables:
-   - `CORS_ORIGINS`: `https://your-frontend-name.onrender.com`
-5. Deploy and save the generated service URL.
-
-### Step 3: Deploy Frontend Static Site on Render
-1. Go to Render Dashboard $\rightarrow$ **New +** $\rightarrow$ **Static Site**.
-2. Select your repository.
-3. Configure settings:
-   - **Root Directory**: `Mini-project-frontend`
-   - **Build Command**: `npm install && npm run build`
-   - **Publish Directory**: `dist`
-4. Set Environment Variable:
-   - `VITE_API_BASE_URL`: `https://your-backend-service.onrender.com`
-5. Deploy the static site!
+### Frontend Static Site (`Mini-project-frontend`)
+1. Create a **Static Site** on Render.
+2. Set **Root Directory**: `Mini-project-frontend`
+3. Set **Build Command**: `npm install && npm run build`
+4. Set **Publish Directory**: `dist`
+5. Set Environment Variable: `VITE_API_BASE_URL` = `https://your-backend-api.onrender.com`

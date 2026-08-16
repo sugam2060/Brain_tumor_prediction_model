@@ -14,12 +14,12 @@ venv/
 # Datasets (Training & Testing data)
 Testing/
 Training/
-model_and_api/Testing/
-model_and_api/Training/
+model_prep_and_api/model_prep/Testing/
+model_prep_and_api/model_prep/Training/
 
 # Uploads & temporary files
-model_and_api/uploads/*
-!model_and_api/uploads/.gitkeep
+model_prep_and_api/api/uploads/*
+!model_prep_and_api/api/uploads/.gitkeep
 
 # Notebook checkpoints
-.ipynb_checkpoints/
+.ipynb_checkpoints/
