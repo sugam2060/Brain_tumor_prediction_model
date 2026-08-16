@@ -1,4 +1,3 @@
-import gc
 import io
 import logging
 import os
@@ -10,46 +9,32 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import numpy as np
 from PIL import Image
-import torch
-from torchvision import transforms
+import onnxruntime as ort
 import uvicorn
-
-from model_def import BrainTumorVGG16
 
 warnings.filterwarnings("ignore")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.environ.get("MODEL_PATH", os.path.join(BASE_DIR, "model.pth"))
+MODEL_PATH = os.environ.get("MODEL_PATH", os.path.join(BASE_DIR, "model.onnx"))
 CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*")
 
 class_labels = ["glioma", "meningioma", "notumor", "pituitary"]
-device = torch.device("cpu")
 
-# Limit PyTorch CPU thread count and memory overhead
-torch.set_num_threads(1)
-
-# Image transformation pipeline (Resize to 128x128, convert to tensor [0, 1])
-image_transforms = transforms.Compose([
-    transforms.Resize((128, 128)),
-    transforms.ToTensor(),
-])
-
-# Initialize empty PyTorch VGG16 structure (weights=None to avoid loading 528MB pre-trained weights into RAM)
-model = BrainTumorVGG16(num_classes=len(class_labels), freeze_features=True, weights=None)
-
+# Load ONNX Inference Session
 if os.path.exists(MODEL_PATH):
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
-    print(f"Loaded PyTorch model weights from {MODEL_PATH}")
+    session = ort.InferenceSession(MODEL_PATH, providers=["CPUExecutionProvider"])
+    input_name = session.get_inputs()[0].name
+    output_name = session.get_outputs()[0].name
+    print(f"Loaded ONNX model session from {MODEL_PATH}")
 else:
+    session = None
+    input_name = None
+    output_name = None
     print(f"Warning: Model file not found at {MODEL_PATH}.")
-
-model.to(device)
-model.eval()
-gc.collect()
 
 app = FastAPI(
     title="Brain Tumor Prediction API",
-    description="FastAPI service for Brain Tumor Detection and Classification using PyTorch (VGG16)",
+    description="FastAPI service for Brain Tumor Detection and Classification using ONNX Runtime",
     version="1.0.0",
 )
 
@@ -64,7 +49,18 @@ app.add_middleware(
 )
 
 
+def softmax(x: np.ndarray) -> np.ndarray:
+    e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
+    return e_x / np.sum(e_x, axis=-1, keepdims=True)
+
+
 def predict_image(image_bytes: bytes) -> Dict[str, float | str]:
+    if session is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Model is not loaded."
+        )
+
     try:
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     except Exception:
@@ -73,16 +69,20 @@ def predict_image(image_bytes: bytes) -> Dict[str, float | str]:
             detail="Invalid image format or corrupted file."
         )
 
-    tensor_img = image_transforms(image).unsqueeze(0).to(device)
+    # Preprocessing: Resize to 128x128, normalize [0, 1], transpose to (1, 3, 128, 128)
+    image = image.resize((128, 128))
+    img_np = np.array(image).astype(np.float32) / 255.0
+    img_np = np.transpose(img_np, (2, 0, 1))
+    tensor_input = np.expand_dims(img_np, axis=0)
 
-    with torch.inference_mode():
-        outputs = model(tensor_img)
-        probabilities = torch.softmax(outputs, dim=1)[0]
-        confidence_score, predicted_idx = torch.max(probabilities, dim=0)
+    outputs = session.run([output_name], {input_name: tensor_input})[0]
+    probabilities = softmax(outputs)[0]
+    predicted_idx = int(np.argmax(probabilities))
+    confidence_score = float(probabilities[predicted_idx])
 
-    predicted_label = class_labels[predicted_idx.item()]
+    predicted_label = class_labels[predicted_idx]
     result = "No Tumor" if predicted_label.lower() == "notumor" else f"Tumor Found: {predicted_label}"
-    confidence_value = float(confidence_score.item() * 100)
+    confidence_value = float(confidence_score * 100)
 
     return {
         "result": result,

@@ -1,6 +1,39 @@
 # 🧠 Brain Tumor Detection & Classification System (PyTorch + FastAPI + React)
 
-An end-to-end Deep Learning web application for automatic detection and multi-class classification of brain tumors from MRI scans. Built with **PyTorch (torchvision VGG16)**, **FastAPI (Uvicorn)** backend REST API, and a modern **React + Vite** frontend interface. Fully compatible with **Python 3.12+**.
+An end-to-end Deep Learning web application for automatic detection and multi-class classification of brain tumors from MRI scans. Built with **PyTorch (torchvision VGG16)**, **ONNX Runtime**, **FastAPI (Uvicorn)** backend REST API, and a modern **React + Vite** frontend interface. Fully compatible with **Python 3.12+**.
+
+---
+
+## 📊 Model Performance & Evaluation Reports
+
+The PyTorch VGG16 model was trained with GPU acceleration (NVIDIA RTX 3050) over 5 epochs and evaluated on 1,600 test MRI scans across 4 classes: `glioma`, `meningioma`, `notumor`, and `pituitary`.
+
+- **Training Accuracy**: **95.89%** (Epoch 5 Loss: `0.1177`)
+- **Overall Test Accuracy**: **91.00%** (1,600 Test Scans)
+- **Production Inference Engine**: ONNX Runtime (Peak Operational RAM: **~131 MB**, fitting Render 512 MB Free Tier limit)
+
+### 📈 Evaluation Charts
+
+| Training History (Accuracy vs Loss) | Confusion Matrix |
+| :---: | :---: |
+| ![Training History](model_prep_and_api/model_prep/report/model_training_history(accuracy%20vs%20loss).png) | ![Confusion Matrix](model_prep_and_api/model_prep/report/confusion_matrics.png) |
+
+#### 📉 ROC Curves
+![ROC Curves](model_prep_and_api/model_prep/report/ROC_curve.png)
+
+#### 📋 Classification Report Breakdown
+```text
+              precision    recall  f1-score   support
+
+      glioma       0.89      0.79      0.83       400
+  meningioma       0.84      0.89      0.86       400
+     notumor       0.92      0.99      0.96       400
+   pituitary       0.97      0.96      0.96       400
+
+    accuracy                           0.91      1600
+   macro avg       0.91      0.91      0.91      1600
+weighted avg       0.91      0.91      0.91      1600
+```
 
 ---
 
@@ -8,15 +41,16 @@ An end-to-end Deep Learning web application for automatic detection and multi-cl
 
 ```
 Brain_tumor_prediction_model/
-├── .gitattributes                # Git LFS configuration for *.pth weights
+├── .gitattributes                # Git LFS configuration for *.pth and *.onnx weights
 ├── .gitignore                    # Ignores dataset folders & temporary build files
 ├── .python-version               # Python version (3.12.0)
 ├── README.md                     # Documentation & setup guide
+├── MEMORY_DIAGNOSTIC_AND_RENDER_FIX_REPORT.md # Memory diagnostic & ONNX optimization report
 │
 ├── model_prep_and_api/           # Parent Container Folder
 │   ├── model_prep/               # Training & Dataset Prep
 │   │   ├── model_def.py          # PyTorch BrainTumorVGG16 model architecture
-│   │   ├── train_pytorch_model.py# PyTorch training & evaluation script (saves model.pth to api/)
+│   │   ├── train_pytorch_model.py# PyTorch training & evaluation script (saves model.pth & model.onnx)
 │   │   ├── requirement_model_prep.txt # Training & GPU dependencies (CUDA 12.1, PyTorch, tqdm, etc.)
 │   │   ├── Training/             # Training dataset (ignored in git)
 │   │   ├── Testing/              # Testing dataset (ignored in git)
@@ -27,10 +61,11 @@ Brain_tumor_prediction_model/
 │   │       └── model_training_history(accuracy vs loss).png
 │   │
 │   └── api/                      # Backend FastAPI Service (Deployable to Render)
-│       ├── main.py               # FastAPI REST API for image inference
+│       ├── main.py               # FastAPI REST API (ONNX Runtime engine)
 │       ├── model_def.py          # PyTorch model architecture definition
 │       ├── model.pth             # Saved PyTorch model weights (Git LFS)
-│       ├── requirement.txt       # Production dependencies for API (PyTorch, FastAPI, Uvicorn)
+│       ├── model.onnx            # Low-memory ONNX model weights (Git LFS)
+│       ├── requirement.txt       # Production dependencies (ONNX Runtime, FastAPI, Uvicorn)
 │       ├── .env.example          # Environment variables template
 │       ├── .python-version       # Set to 3.12.0
 │       └── uploads/              # Temporary image uploads
@@ -49,7 +84,7 @@ Brain_tumor_prediction_model/
 ### Prerequisites
 - **Python**: Version 3.12 or higher
 - **Node.js**: Version 18.x or higher
-- **Git & Git LFS**: For managing `model.pth` weights
+- **Git & Git LFS**: For managing `model.pth` and `model.onnx` weights
 
 ---
 
@@ -68,11 +103,11 @@ Brain_tumor_prediction_model/
    ```bash
    python train_pytorch_model.py
    ```
-   *This trains the pre-trained VGG16 PyTorch model with GPU acceleration (RTX 3050), generates evaluation reports in `model_prep/report/`, and automatically saves `model.pth` into `model_prep_and_api/api/`.*
+   *This trains the pre-trained VGG16 PyTorch model with GPU acceleration (RTX 3050), generates evaluation reports in `model_prep/report/`, and automatically exports `model.pth` and `model.onnx` into `model_prep_and_api/api/`.*
 
 ---
 
-### Step 2: Backend Setup (FastAPI + Uvicorn)
+### Step 2: Backend Setup (FastAPI + ONNX Runtime)
 
 1. Navigate to `model_prep_and_api/api`:
    ```bash
@@ -84,10 +119,10 @@ Brain_tumor_prediction_model/
    ```
 3. Start the FastAPI server with Uvicorn:
    ```bash
-   uvicorn main:app --port 5000 --reload
+   uvicorn main:app --port 8000 --reload
    ```
-   *Backend API runs at `http://localhost:5000`.*
-   *Interactive API Documentation (Swagger UI): `http://localhost:5000/docs`.*
+   *Backend API runs at `http://localhost:8000`.*
+   *Interactive API Documentation (Swagger UI): `http://localhost:8000/docs`.*
 
 ---
 

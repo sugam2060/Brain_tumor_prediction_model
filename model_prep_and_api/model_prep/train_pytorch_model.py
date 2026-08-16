@@ -107,6 +107,23 @@ def main():
     torch.save(model.state_dict(), save_model_path)
     print(f"[OK] Model weights saved successfully to: {save_model_path}")
 
+    # Export ONNX model for lightweight production deployment
+    save_onnx_path = os.path.join(api_dir, "model.onnx")
+    model.eval()
+    dummy_input = torch.randn(1, 3, 128, 128, device=device)
+    torch.onnx.export(
+        model,
+        dummy_input,
+        save_onnx_path,
+        export_params=True,
+        opset_version=14,
+        do_constant_folding=True,
+        input_names=['input'],
+        output_names=['output'],
+        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+    )
+    print(f"[OK] ONNX model exported successfully to: {save_onnx_path}")
+
     # Plot & Save Training History in report/
     plt.figure(figsize=(10, 5))
     plt.plot(range(1, epochs + 1), history["accuracy"], "g-o", label="Accuracy", linewidth=2.5)
