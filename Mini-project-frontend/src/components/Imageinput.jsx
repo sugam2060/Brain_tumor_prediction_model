@@ -13,7 +13,8 @@ const Imageinput = ({ setPrediction }) => {
       return;
     }
 
-    const api_uri = import.meta.env.VITE_REST_API;
+    const raw_uri = import.meta.env.VITE_REST_API || "http://localhost:8000/predict";
+    const api_uri = raw_uri.endsWith("/predict") ? raw_uri : `${raw_uri.replace(/\/$/, "")}/predict`;
     const form = new FormData();
     form.append("image", image);
 
