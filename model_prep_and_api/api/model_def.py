@@ -5,15 +5,14 @@ from torchvision.models import vgg16, VGG16_Weights
 
 class BrainTumorVGG16(nn.Module):
     """
-    PyTorch Brain Tumor Classification Model using pre-trained VGG16 backbone.
+    PyTorch Brain Tumor Classification Model using VGG16 backbone.
     Inputs: Tensor of shape (batch_size, 3, 128, 128)
     Outputs: Logits of shape (batch_size, 4) for classes [glioma, meningioma, notumor, pituitary]
     """
 
-    def __init__(self, num_classes: int = 4, freeze_features: bool = True):
+    def __init__(self, num_classes: int = 4, freeze_features: bool = True, weights=None):
         super(BrainTumorVGG16, self).__init__()
 
-        weights = VGG16_Weights.DEFAULT
         vgg = vgg16(weights=weights)
 
         self.features = vgg.features

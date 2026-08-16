@@ -1,3 +1,4 @@
+import gc
 import io
 import logging
 import os
@@ -23,6 +24,8 @@ CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*")
 
 class_labels = ["glioma", "meningioma", "notumor", "pituitary"]
 device = torch.device("cpu")
+
+# Limit PyTorch CPU thread count and memory overhead
 torch.set_num_threads(1)
 
 # Image transformation pipeline (Resize to 128x128, convert to tensor [0, 1])
@@ -31,8 +34,8 @@ image_transforms = transforms.Compose([
     transforms.ToTensor(),
 ])
 
-# Initialize PyTorch Model
-model = BrainTumorVGG16(num_classes=len(class_labels), freeze_features=True)
+# Initialize empty PyTorch VGG16 structure (weights=None to avoid loading 528MB pre-trained weights into RAM)
+model = BrainTumorVGG16(num_classes=len(class_labels), freeze_features=True, weights=None)
 
 if os.path.exists(MODEL_PATH):
     model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
@@ -42,6 +45,7 @@ else:
 
 model.to(device)
 model.eval()
+gc.collect()
 
 app = FastAPI(
     title="Brain Tumor Prediction API",
@@ -63,7 +67,7 @@ app.add_middleware(
 def predict_image(image_bytes: bytes) -> Dict[str, float | str]:
     try:
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid image format or corrupted file."
@@ -71,7 +75,7 @@ def predict_image(image_bytes: bytes) -> Dict[str, float | str]:
 
     tensor_img = image_transforms(image).unsqueeze(0).to(device)
 
-    with torch.no_grad():
+    with torch.inference_mode():
         outputs = model(tensor_img)
         probabilities = torch.softmax(outputs, dim=1)[0]
         confidence_score, predicted_idx = torch.max(probabilities, dim=0)
