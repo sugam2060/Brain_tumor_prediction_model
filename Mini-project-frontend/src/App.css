@@ -368,3 +368,67 @@ input {
     flex-direction: column;
   }
 }
+
+.confidence-badge.warning {
+  background: rgba(245, 166, 35, 0.18);
+  color: #c47100;
+}
+
+.confidence-alert-banner {
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.confidence-alert-banner p {
+  margin: 0;
+}
+
+.confidence-alert-banner.high {
+  background: rgba(26, 168, 116, 0.1);
+  border: 1px solid rgba(26, 168, 116, 0.25);
+  color: #168a5f;
+}
+
+.confidence-alert-banner.medium {
+  background: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  color: #b56c00;
+}
+
+.confidence-alert-banner.warning {
+  background: rgba(245, 166, 35, 0.18);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  color: #a85d00;
+}
+
+.confidence-alert-banner.low {
+  background: rgba(225, 84, 87, 0.1);
+  border: 1px solid rgba(225, 84, 87, 0.25);
+  color: #c62828;
+}
+
+.uncertain-box {
+  padding: 22px;
+  border-radius: 16px;
+  background: rgba(225, 84, 87, 0.05);
+  border: 1.5px dashed rgba(225, 84, 87, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.uncertain-box h3 {
+  margin: 0;
+  color: #c62828;
+  font-size: 1.1rem;
+}
+
+.uncertain-box p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.6;
+}
+
