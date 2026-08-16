@@ -1,0 +1,12 @@
+numpy
+matplotlib
+seaborn
+pillow
+scikit-learn
+tensorflow
+flask
+flask-cors
+waitress
+gunicorn
+ipykernel
+

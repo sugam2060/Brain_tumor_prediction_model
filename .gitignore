@@ -1,13 +1,25 @@
 # General ignores
 *.pyc
 __pycache__/
+*.env
+*.env.local
 .env
 node_modules/
 build/
 dist/
 .DS_Store
+.venv/
+venv/
 
-model_and_api/model.h5
+# Datasets (Training & Testing data)
+Testing/
+Training/
+model_and_api/Testing/
+model_and_api/Training/
 
-Testing
-Training
+# Uploads & temporary files
+model_and_api/uploads/*
+!model_and_api/uploads/.gitkeep
+
+# Notebook checkpoints
+.ipynb_checkpoints/
