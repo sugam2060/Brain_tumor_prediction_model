@@ -27,6 +27,21 @@ CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*")
 class_labels = ["glioma", "meningioma", "notumor", "pituitary"]
 
 
+# Compatibility patch for Keras initializer schema differences across Keras versions
+import keras.initializers as initializers
+
+for _name in dir(initializers):
+    _cls = getattr(initializers, _name)
+    if isinstance(_cls, type) and issubclass(_cls, initializers.Initializer):
+        _orig_init = _cls.__init__
+        def _make_init(old_init):
+            def _patched_init(self, *args, **kwargs):
+                kwargs.pop("input_axes", None)
+                kwargs.pop("output_axes", None)
+                return old_init(self, *args, **kwargs)
+            return _patched_init
+        _cls.__init__ = _make_init(_orig_init)
+
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
 
