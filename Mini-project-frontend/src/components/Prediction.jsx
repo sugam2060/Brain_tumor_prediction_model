@@ -5,6 +5,7 @@ const Prediction = ({ prediction }) => {
   const grok_api = import.meta.env.VITE_GEN_AI;
   const [result, setResult] = useState(null);
 
+  const isInvalidImage = prediction?.result === "Invalid Image" || !!prediction?.error;
   const rawConfidence = prediction?.confidence;
   const parsedConfidence =
     typeof rawConfidence === "number"
@@ -21,8 +22,8 @@ const Prediction = ({ prediction }) => {
     : rawResult;
 
   useEffect(() => {
-    // Call LLM ONLY if confidence is above 80%
-    if (!prediction || !grok_api || confidence <= 80) {
+    // Call LLM ONLY if image is a valid MRI AND confidence is above 80%
+    if (!prediction || isInvalidImage || !grok_api || confidence <= 80) {
       setResult(null);
       return;
     }
@@ -73,7 +74,7 @@ Confidence: ${confidenceText}
     };
 
     getAIResponse();
-  }, [prediction, grok_api, confidence, rawResult]);
+  }, [prediction, isInvalidImage, grok_api, confidence, rawResult]);
 
   if (!prediction) {
     return (
@@ -84,7 +85,29 @@ Confidence: ${confidenceText}
     );
   }
 
-  // Bracket Evaluation
+  // Handle Invalid / Non-MRI Image Upload (e.g. cat, dog, landscape photos)
+  if (isInvalidImage) {
+    return (
+      <div className="prediction-container">
+        <div className="result-header">
+          <div>
+            <p className="panel-kicker">Diagnostic Validation</p>
+            <h2>Invalid Scan Type</h2>
+          </div>
+          <span className="confidence-badge low">Non-MRI Image</span>
+        </div>
+
+        <div className="uncertain-box">
+          <h3>Non-MRI Image Detected</h3>
+          <p>
+            {prediction.error || "The uploaded image does not appear to be a Brain MRI scan. Please upload a valid brain MRI scan."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Bracket Evaluation for Valid Brain MRI Scans:
   // 1. confidence > 80: High confidence -> Full display + LLM summary
   // 2. 70 <= confidence <= 80: Moderate confidence -> Show diagnosis + tumor name message, NO LLM
   // 3. confidence < 70: Low confidence -> Show "I am not sure" message, NO LLM

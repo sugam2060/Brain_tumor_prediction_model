@@ -49,6 +49,34 @@ app.add_middleware(
 )
 
 
+def is_valid_mri(image: Image.Image) -> tuple[bool, str]:
+    """
+    Validates whether the input image is a genuine Brain MRI scan.
+    Rejects colored photos (cats, dogs, landscapes, selfies, etc.)
+    """
+    img_rgb = image.convert("RGB")
+    arr = np.array(img_rgb, dtype=np.float32)
+
+    # 1. Color Variance / Saturation Check (MRI scans are grayscale images where R == G == B)
+    r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+    rg_diff = np.abs(r - g)
+    gb_diff = np.abs(g - b)
+    br_diff = np.abs(b - r)
+    color_std = float(np.mean(rg_diff + gb_diff + br_diff))
+
+    if color_std > 12.0:
+        return False, "The uploaded image is not a valid Brain MRI scan (color photo detected)."
+
+    # 2. Dark Background Ratio Check (MRI scans have dark borders around skull tissue)
+    brightness = np.mean(arr, axis=2)
+    dark_pixels_ratio = float(np.mean(brightness < 50))
+
+    if dark_pixels_ratio < 0.10:
+        return False, "The uploaded image lacks a standard brain MRI scan background."
+
+    return True, "Valid MRI scan"
+
+
 def softmax(x: np.ndarray) -> np.ndarray:
     e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
     return e_x / np.sum(e_x, axis=-1, keepdims=True)
@@ -69,9 +97,18 @@ def predict_image(image_bytes: bytes) -> Dict[str, float | str]:
             detail="Invalid image format or corrupted file."
         )
 
+    # Validate whether image is a genuine Brain MRI scan
+    valid_mri, reason = is_valid_mri(image)
+    if not valid_mri:
+        return {
+            "result": "Invalid Image",
+            "confidence": 0.0,
+            "error": reason
+        }
+
     # Preprocessing: Resize to 128x128, normalize [0, 1], transpose to (1, 3, 128, 128)
-    image = image.resize((128, 128))
-    img_np = np.array(image).astype(np.float32) / 255.0
+    resized_img = image.resize((128, 128))
+    img_np = np.array(resized_img).astype(np.float32) / 255.0
     img_np = np.transpose(img_np, (2, 0, 1))
     tensor_input = np.expand_dims(img_np, axis=0)
 
