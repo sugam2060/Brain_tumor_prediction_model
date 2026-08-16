@@ -23,6 +23,7 @@ CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*")
 
 class_labels = ["glioma", "meningioma", "notumor", "pituitary"]
 device = torch.device("cpu")
+torch.set_num_threads(1)
 
 # Image transformation pipeline (Resize to 128x128, convert to tensor [0, 1])
 image_transforms = transforms.Compose([
