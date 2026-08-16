@@ -11,11 +11,12 @@ dist/
 .venv/
 venv/
 
-# Datasets (Training & Testing data)
+# Datasets & Showcase images (Training, Testing, & showcase data)
 Testing/
 Training/
 model_prep_and_api/model_prep/Testing/
 model_prep_and_api/model_prep/Training/
+showcase-img/
 
 # Uploads & temporary files
 model_prep_and_api/api/uploads/*
