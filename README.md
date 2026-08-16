@@ -171,7 +171,7 @@ git push origin main
    - **Root Directory**: `model_and_api`
    - **Environment**: `Python 3`
    - **Build Command**: `pip install -r requirement.txt`
-   - **Start Command**: `gunicorn FlaskAPI:app`
+   - **Start Command**: `gunicorn -b 0.0.0.0:$PORT --timeout 120 FlaskAPI:app`
 4. Set Environment Variables:
    - `CORS_ORIGINS`: `https://your-frontend-name.onrender.com`
 5. Deploy and save the generated service URL.

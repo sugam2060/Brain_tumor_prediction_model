@@ -5,3 +5,7 @@ flask
 flask-cors
 waitress
 gunicorn
+matplotlib
+seaborn
+scikit-learn
+ipykernel
