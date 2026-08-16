@@ -1,12 +1,7 @@
 numpy
-matplotlib
-seaborn
 pillow
-scikit-learn
-tensorflow
+tensorflow-cpu
 flask
 flask-cors
 waitress
 gunicorn
-ipykernel
-
