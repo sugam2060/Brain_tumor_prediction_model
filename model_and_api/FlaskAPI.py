@@ -30,7 +30,7 @@ class_labels = ["glioma", "meningioma", "notumor", "pituitary"]
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
 
-model = load_model(MODEL_PATH)
+model = load_model(MODEL_PATH, compile=False)
 
 app = Flask(__name__)
 allowed_origins = "*" if CORS_ORIGINS == "*" else [origin.strip() for origin in CORS_ORIGINS.split(",") if origin.strip()]
