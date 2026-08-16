@@ -15,14 +15,14 @@ const Prediction = ({ prediction }) => {
   const confidence = Number.isFinite(parsedConfidence) ? parsedConfidence : 0;
   const rawResult = prediction?.result || "Not available";
 
-  // Extract tumor type label for messaging
+  // Extract clean tumor label
   const tumorType = rawResult.toLowerCase().includes("tumor found:")
     ? rawResult.split(":")[1].trim()
     : rawResult;
 
   useEffect(() => {
-    // Only generate AI summary if confidence is >= 60%
-    if (!prediction || !grok_api || confidence < 60) {
+    // Call LLM ONLY if confidence is above 80%
+    if (!prediction || !grok_api || confidence <= 80) {
       setResult(null);
       return;
     }
@@ -84,26 +84,69 @@ Confidence: ${confidenceText}
     );
   }
 
-  // Evaluate Confidence Brackets & Tailored Messaging
-  let confidenceBadgeClass = "low";
-  let confidenceMessage = "";
-  let showResult = true;
+  // Bracket Evaluation
+  // 1. confidence > 80: High confidence -> Full display + LLM summary
+  // 2. 70 <= confidence <= 80: Moderate confidence -> Show diagnosis + tumor name message, NO LLM
+  // 3. confidence < 70: Low confidence -> Show "I am not sure" message, NO LLM
 
-  if (confidence > 85) {
-    confidenceBadgeClass = "high";
-    confidenceMessage = "High confidence prediction. The model output is most probably correct.";
-  } else if (confidence >= 70) {
-    confidenceBadgeClass = "medium";
-    confidenceMessage = "Moderate confidence prediction. Result is displayed, but it may or may not be correct.";
-  } else if (confidence >= 60) {
-    confidenceBadgeClass = "warning";
-    confidenceMessage = `I think it is ${tumorType}, but I am not sure. You may want to consult a doctor for it.`;
-  } else {
-    confidenceBadgeClass = "low";
-    confidenceMessage = "I am not sure about it. Can you please provide another image or consult with a doctor?";
-    showResult = false;
+  if (confidence > 80) {
+    return (
+      <div className="prediction-container">
+        <div className="result-header">
+          <div>
+            <p className="panel-kicker">AI Diagnostic Analysis</p>
+            <h2>Prediction Result</h2>
+          </div>
+          <span className="confidence-badge high">
+            {confidence.toFixed(2)}% confidence
+          </span>
+        </div>
+
+        <div className="classification-box">
+          <span className="label">Diagnosis</span>
+          <strong>{rawResult}</strong>
+        </div>
+
+        {result ? (
+          <div className="result-html" dangerouslySetInnerHTML={{ __html: result }} />
+        ) : (
+          <div className="loading-box">
+            <div className="spinner" />
+            <p>Generating clinical summary...</p>
+          </div>
+        )}
+      </div>
+    );
   }
 
+  if (confidence >= 70) {
+    return (
+      <div className="prediction-container">
+        <div className="result-header">
+          <div>
+            <p className="panel-kicker">AI Diagnostic Analysis</p>
+            <h2>Prediction Result</h2>
+          </div>
+          <span className="confidence-badge medium">
+            {confidence.toFixed(2)}% confidence
+          </span>
+        </div>
+
+        <div className="classification-box">
+          <span className="label">Diagnosis</span>
+          <strong>{rawResult}</strong>
+        </div>
+
+        <div className="confidence-alert-banner medium">
+          <p>
+            I am not sure, although the model is predicting <strong>{tumorType}</strong>. You may want to consult a doctor for verification.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // confidence < 70
   return (
     <div className="prediction-container">
       <div className="result-header">
@@ -111,38 +154,17 @@ Confidence: ${confidenceText}
           <p className="panel-kicker">AI Diagnostic Analysis</p>
           <h2>Prediction Result</h2>
         </div>
-        <span className={`confidence-badge ${confidenceBadgeClass}`}>
+        <span className="confidence-badge low">
           {confidence.toFixed(2)}% confidence
         </span>
       </div>
 
-      {/* Confidence Alert & Guidance Banner */}
-      <div className={`confidence-alert-banner ${confidenceBadgeClass}`}>
-        <p>{confidenceMessage}</p>
+      <div className="uncertain-box">
+        <h3>Low Diagnostic Confidence</h3>
+        <p>
+          I am not sure about this result. Can you please provide another image or consult with a doctor?
+        </p>
       </div>
-
-      {showResult ? (
-        <>
-          <div className="classification-box">
-            <span className="label">Diagnosis</span>
-            <strong>{rawResult}</strong>
-          </div>
-
-          {result ? (
-            <div className="result-html" dangerouslySetInnerHTML={{ __html: result }} />
-          ) : (
-            <div className="loading-box">
-              <div className="spinner" />
-              <p>Generating clinical summary...</p>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="uncertain-box">
-          <h3>Uncertain Diagnostic Confidence</h3>
-          <p>{confidenceMessage}</p>
-        </div>
-      )}
     </div>
   );
 };
