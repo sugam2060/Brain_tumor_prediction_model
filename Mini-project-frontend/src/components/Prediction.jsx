@@ -59,7 +59,7 @@ Confidence: ${confidenceText}
         setResult(null);
         const response = await groq.chat.completions.create({
           messages: [{ role: "user", content: prompt }],
-          model: "llama-3.1-8b-instant",
+          model: "openai/gpt-oss-120b",
         });
 
         const resultText =
